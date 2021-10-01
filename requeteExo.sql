@@ -19,10 +19,14 @@ SELECT name FROM category;
 -- ## Requêtes avec de filtres
 -- 6.  Chercher toutes les infos sur le client Betty White
 SELECT * FROM customer WHERE first_name = 'Betty' AND last_name = 'white';
+-- 6.BIS  Chercher toutes les infos sur les clients SAUF Betty White
+SELECT * FROM customer WHERE NOT (first_name = 'Betty' AND last_name = 'white');
+--ou
+SELECT * FROM customer WHERE first_name <> 'Betty' OR last_name <> 'white';
 
 -- 7.  Obtenir les films dont la location (rental_rate) coute moins de 3€. 
 --Triez le résultat par prix ascendant en utilisant ORDER BY
-SELECT title FROM film WHERE rental_rate < 3 ORDER BY title;
+SELECT film.title, film.rental_rate FROM film WHERE rental_rate < 3 ORDER BY rental_rate DESC;
 
 -- 8.  Obtenir tous les films qu'on peut louer pendant plus de 5 jours
 SELECT title FROM film WHERE rental_duration > 5;
@@ -35,6 +39,8 @@ SELECT title FROM film WHERE title LIKE 'c%';
 
 -- 11. Obtenir les titres des films dont la location coûte entre 4 et 6 euros
 SELECT title FROM film WHERE rental_rate BETWEEN 4 AND 6;
+--ou
+SELECT title FROM film WHERE rental_rate >= 4 AND rental_rate <= 6;
 
 -- 12. Chercher tous les films dont le nom contient « Town »
 SELECT title FROM film WHERE title LIKE '%Town%';
@@ -70,48 +76,68 @@ SELECT MAX(length) FROM film;
 SELECT AVG(length) FROM film;
 
 -- ## Requêtes de jointure
--- 22. Obtenir la ville de chaque client
+--22.  Obtenir tous les titres des films joués par Fred Costner
+SELECT film.title AS 'Film de Fred Costner' FROM film INNER JOIN film_actor ON film_actor.film_id = film.film_id INNER JOIN actor ON film_actor.actor_id = actor.actor_id WHERE actor.first_name = 'Fred' AND last_name = 'Costner';
 
--- 23. Obtenir tous les titres des films joués par Fred Costner
+-- 23.  Obtenir la liste d'acteurs qui jouent dans African Egg
+SELECT actor.first_name, actor.last_name FROM actor INNER JOIN film_actor ON film_actor.actor_id = actor.actor_id INNER JOIN film ON film_actor.film_id = film.film_id WHERE film.title = 'African Egg';
 
--- 24. Obtenir la liste d'acteurs qui jouent dans African Egg
+-- 24.  Obtenir tous les films de chaque catégorie
+SELECT film.title, category.name FROM film
+INNER JOIN film_category
+ON film_category.film_id = film.film_id
+INNER JOIN category
+ON film_category.category_id = category.category_id;
 
--- 25. Obtenir tous les films de chaque catégorie
-
--- 26. Obtenir toutes les villes de chaque pays
+-- 25.  Obtenir toutes les villes de chaque pays
+SELECT country.country, city.city FROM city INNER JOIN country ON city.country_id = country.country_id;
 
 -- ## Group by + jointures
+-- 26.  Obtenir le nombre de films par durée de location
+SELECT film.rental_duration, COUNT(film.film_id) FROM film GROUP BY film.rental_duration;
 
--- 27. Obtenir le nombre de films par durée de location
+-- EXTRA TIME -> TIMEDIFF & DATEDIFF
+SELECT rental_id, timediff(return_date, rental_date), rental_date, return_date FROM `rental`;
+SELECT rental_id, dateediff(return_date, rental_date), rental_date, return_date FROM `rental`;
 
--- 28. Obtenir le nombre de locations par client
+-- 27. Obtenir le nombre de locations par client
+SELECT customer.first_name, customer.last_name, COUNT(rental.customer_id) FROM customer INNER JOIN rental ON rental.customer_id = customer.customer_id GROUP BY rental.customer_id;
 
--- 29. Obtenir le nombre de films par rating
+-- 28. Obtenir le nombre de films par rating
+SELECT film.rating, COUNT(film.rating) FROM film GROUP BY film.rating;
 
--- 30. Obtenir le nombre de films par langue
+-- 29. Obtenir le nombre de films par langue
+SELECT language.name, COUNT(film.film_id) FROM film INNER JOIN language ON language.language_id = film.language_id GROUP BY language.name;
 
--- 31. Obtenir le nombre de locations par client
+-- 30. Obtenir le nombre de locations par client
+SELECT customer.first_name, customer.last_name, COUNT(rental.customer_id) FROM customer INNER JOIN rental ON rental.customer_id = customer.customer_id GROUP BY rental.customer_id;
 
--- 32. Obtenir le nombre de copies de Alabama Devil qui se trouvent dans
---     l'inventaire
+-- 31. Obtenir le nombre de copies de Alabama Devil qui se trouvent dans l'inventaire
+SELECT film.title, COUNT(inventory.film_id) FROM `film` INNER JOIN inventory ON inventory.film_id = film.film_id WHERE film.title = 'Alabama Devil' GROUP BY film.title;
 
--- 33. Obtenir la liste de films loués par Lisa Anderson
+-- 32. Obtenir la liste de films loués par Lisa Anderson
+SELECT film.title FROM `film` 
+INNER JOIN inventory
+ON inventory.film_id = film.film_id
+INNER JOIN rental
+ON rental.inventory_id = inventory.inventory_id
+INNER JOIN customer
+ON rental.customer_id = customer.customer_id
+WHERE customer.first_name = 'Lisa' AND customer.last_name = 'Anderson'
 
--- 34. Obtenir le nombre de locations faites par Elizabeth Brown
+-- 33. Obtenir le nombre de locations faites par Elizabeth Brown
 
--- 35. Obtenir le nombre de films par catégorie
+-- 34. Obtenir le nombre de films par catégorie
 
--- 36. Obtenir le nombre de clients par pays
+-- 35. Obtenir le nombre de clients par pays
 
--- 37. Obtenir le nombre de films par acteur. Affichez le nom de l'acteur
+-- 36. Obtenir le nombre de films par acteur. Affichez le nom de l'acteur
 
--- 38. Obtenir le nombre de films par catégorie, uniquement pour les
---     catégories qui ont au moins 5 films
+-- 37. Obtenir le nombre de films par catégorie, uniquement pour les catégories qui ont au moins 5 films
 
--- 39. Obtenir le prix total des locations de chaque client
+-- 38. Obtenir le prix total des locations de chaque client
 
--- 40. Obtenir la liste de tous les clients qui ont réalisé plus de 5
---     locations
+-- 39. Obtenir la liste de tous les clients qui ont réalisé plus de 5 locations
 
 -- ## Calculs et fonctions de base
 -- 41. Les prix de location sont en dollars. Obtenez les informations du tableau de « payments » en rajoutant une colonne contenant les prix en euros
@@ -128,3 +154,4 @@ SELECT AVG(length) FROM film;
 -- 46. Créez 3 requêtes de jointure ayant au moins 3 tableaux (INNER JOIN)
 
 -- 47. Créez 3 requêtes de jointure ayant au moins 3 tableaux et qui contiennent un regroupement
+
