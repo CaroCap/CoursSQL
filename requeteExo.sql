@@ -1,6 +1,6 @@
--- # Exercices de requêtes
+--*# Exercices de requêtes
 
--- ## Requêtes simples
+-- *## Requêtes simples
 -- 1.  Obtenir toutes les informations de tous les films
 SELECT * FROM film;
 
@@ -16,7 +16,7 @@ SELECT * from actor;
 -- 5.  Obtenir toutes les noms des catégories des films
 SELECT name FROM category;
 
--- ## Requêtes avec de filtres
+-- *## Requêtes avec de filtres
 -- 6.  Chercher toutes les infos sur le client Betty White
 SELECT * FROM customer WHERE first_name = 'Betty' AND last_name = 'white';
 -- 6.BIS  Chercher toutes les infos sur les clients SAUF Betty White
@@ -59,12 +59,12 @@ SELECT * FROM customer WHERE last_name = 'Rashomon';
 --?
  SELECT * FROM payment WHERE payment_date BETWEEN 2005-08-01 AND 2005-08-10;
 
--- ## Agrégation
+-- *## Agrégation
 -- 17. Obtenir le nombre de clients
 SELECT COUNT(*) FROM customer;
 
--- 18. Calculer la moyenne des prix de location
-/*?*/ SELECT AVG(amount) from payment;
+-- 18. Calculer la moyenne des prix de location avec 2 décimales après la virgule
+SELECT ROUND(AVG(film.rental_rate),2) from film;
 
 -- 19. Compter le nombre de clients actifs
 SELECT COUNT(active) FROM `customer` WHERE active = 1;
@@ -75,7 +75,7 @@ SELECT MAX(length) FROM film;
 -- 21. Calculer la durée moyenne des films
 SELECT AVG(length) FROM film;
 
--- ## Requêtes de jointure
+-- *## Requêtes de jointure
 --22.  Obtenir tous les titres des films joués par Fred Costner
 SELECT film.title AS 'Film de Fred Costner' FROM film INNER JOIN film_actor ON film_actor.film_id = film.film_id INNER JOIN actor ON film_actor.actor_id = actor.actor_id WHERE actor.first_name = 'Fred' AND last_name = 'Costner';
 
@@ -90,9 +90,11 @@ INNER JOIN category
 ON film_category.category_id = category.category_id;
 
 -- 25.  Obtenir toutes les villes de chaque pays
-SELECT country.country, city.city FROM city INNER JOIN country ON city.country_id = country.country_id;
+SELECT country.country, city.city FROM city 
+INNER JOIN country ON city.country_id = country.country_id
+GROUP BY country.country;
 
--- ## Group by + jointures
+-- *## Group by + jointures
 -- 26.  Obtenir le nombre de films par durée de location
 SELECT film.rental_duration, COUNT(film.film_id) FROM film GROUP BY film.rental_duration;
 
@@ -107,10 +109,17 @@ SELECT customer.first_name, customer.last_name, COUNT(rental.customer_id) FROM c
 SELECT film.rating, COUNT(film.rating) FROM film GROUP BY film.rating;
 
 -- 29. Obtenir le nombre de films par langue
-SELECT language.name, COUNT(film.film_id) FROM film INNER JOIN language ON language.language_id = film.language_id GROUP BY language.name;
+SELECT language.name, COUNT(film.film_id) FROM film 
+INNER JOIN language 
+ON language.language_id = film.language_id 
+GROUP BY language.name;
 
 -- 30. Obtenir le nombre de locations par client
-SELECT customer.first_name, customer.last_name, COUNT(rental.customer_id) FROM customer INNER JOIN rental ON rental.customer_id = customer.customer_id GROUP BY rental.customer_id;
+SELECT customer.first_name, customer.last_name, COUNT(rental.customer_id) 
+FROM customer 
+INNER JOIN rental 
+ON rental.customer_id = customer.customer_id 
+GROUP BY rental.customer_id;
 
 -- 31. Obtenir le nombre de copies de Alabama Devil qui se trouvent dans l'inventaire
 SELECT film.title, COUNT(inventory.film_id) FROM `film` INNER JOIN inventory ON inventory.film_id = film.film_id WHERE film.title = 'Alabama Devil' GROUP BY film.title;
@@ -123,32 +132,67 @@ INNER JOIN rental
 ON rental.inventory_id = inventory.inventory_id
 INNER JOIN customer
 ON rental.customer_id = customer.customer_id
-WHERE customer.first_name = 'Lisa' AND customer.last_name = 'Anderson'
+WHERE customer.first_name = 'Lisa' AND customer.last_name = 'Anderson';
 
 -- 33. Obtenir le nombre de locations faites par Elizabeth Brown
+SELECT customer.first_name, customer.last_name, COUNT(rental.customer_id) FROM customer
+INNER JOIN rental
+ON rental.customer_id = customer.customer_id
+WHERE customer.first_name = 'Elizabeth' AND customer.last_name = 'Brown'
+GROUP BY rental.customer_id;
 
 -- 34. Obtenir le nombre de films par catégorie
+SELECT category.name, COUNT(film_category.film_id) FROM category
+INNER JOIN film_category
+ON film_category.category_id = category.category_id
+GROUP BY category.name;
 
--- 35. Obtenir le nombre de clients par pays
+-- 35. Obtenir le nombre de clients par pays 
+-- * IMPOSSIBLE CAR PAS LE LIEN ENTRE TABLES
 
 -- 36. Obtenir le nombre de films par acteur. Affichez le nom de l'acteur
+SELECT actor.first_name, actor.last_name, COUNT(film_actor.film_id) FROM actor
+INNER JOIN film_actor
+ON film_actor.actor_id = actor.actor_id
+GROUP BY film_actor.film_id;
 
--- 37. Obtenir le nombre de films par catégorie, uniquement pour les catégories qui ont au moins 5 films
+-- 37. Obtenir le nombre de films par catégorie, uniquement pour les catégories qui ont au moins 60 films
+SELECT category.name, COUNT(film_category.film_id) FROM category
+INNER JOIN film_category
+ON film_category.category_id = category.category_id
+GROUP BY category.category_id
+HAVING COUNT(film_category.category_id) >=60;
 
 -- 38. Obtenir le prix total des locations de chaque client
+SELECT customer.first_name, customer.last_name, SUM(payment.amount) FROM customer
+INNER JOIN payment
+ON payment.customer_id = customer.customer_id
+GROUP BY customer.customer_id;
 
--- 39. Obtenir la liste de tous les clients qui ont réalisé plus de 5 locations
+-- 39. Obtenir la liste de tous les clients qui ont réalisé plus de 25 locations
+SELECT customer.first_name, customer.last_name, COUNT(rental.customer_id) FROM customer
+INNER JOIN rental
+ON rental.customer_id = customer.customer_id
+GROUP BY rental.customer_id
+HAVING COUNT(rental.customer_id) >=25;
 
--- ## Calculs et fonctions de base
+-- *## Calculs et fonctions de base
 -- 41. Les prix de location sont en dollars. Obtenez les informations du tableau de « payments » en rajoutant une colonne contenant les prix en euros
+SELECT film.title AS 'Titre', film.rental_rate AS 'Prix $', ROUND(film.rental_rate*0.86,2) AS 'Prix €' FROM film;
 
 -- 42. Obtenir les films dont le titre a plus de 10 caractères
+SELECT film.title FROM film
+WHERE LENGTH(film.title) > 10;
 
 -- 43. Obtenir une liste de noms complets de clients (concat)
+SELECT CONCAT(customer.first_name, " ", customer.last_name) FROM customer;
 
 -- 44. Obtenir tous les titres de films en majuscules
+SELECT UPPER(film.title) FROM film;
+SELECT LOWER(film.title) FROM film;
 
 -- 45. Obtenir tous les prix de location arrondis ver le haut
+SELECT ROUND(film.rental_rate) AS 'Prix de Location' FROM film;
 
 -- ## Exercice
 -- 46. Créez 3 requêtes de jointure ayant au moins 3 tableaux (INNER JOIN)
